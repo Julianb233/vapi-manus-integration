@@ -1,11 +1,23 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import {
+  InsertUser,
+  users,
+  vapiAgents,
+  InsertVapiAgent,
+  VapiAgent,
+  callSessions,
+  InsertCallSession,
+  CallSession,
+  conversationMessages,
+  InsertConversationMessage,
+  webhookEvents,
+  InsertWebhookEvent,
+} from "../drizzle/schema";
+import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -56,8 +68,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.role = user.role;
       updateSet.role = user.role;
     } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
+      values.role = "admin";
+      updateSet.role = "admin";
     }
 
     if (!values.lastSignedIn) {
@@ -89,4 +101,100 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Vapi Agent helpers
+export async function createVapiAgent(agent: InsertVapiAgent): Promise<VapiAgent> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(vapiAgents).values(agent);
+  const insertedId = Number(result[0].insertId);
+
+  const inserted = await db.select().from(vapiAgents).where(eq(vapiAgents.id, insertedId)).limit(1);
+  return inserted[0];
+}
+
+export async function getVapiAgentsByUserId(userId: number): Promise<VapiAgent[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(vapiAgents).where(eq(vapiAgents.userId, userId)).orderBy(desc(vapiAgents.createdAt));
+}
+
+export async function getVapiAgentById(id: number): Promise<VapiAgent | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(vapiAgents).where(eq(vapiAgents.id, id)).limit(1);
+  return result[0];
+}
+
+export async function updateVapiAgent(id: number, updates: Partial<InsertVapiAgent>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(vapiAgents).set(updates).where(eq(vapiAgents.id, id));
+}
+
+export async function deleteVapiAgent(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(vapiAgents).where(eq(vapiAgents.id, id));
+}
+
+// Call Session helpers
+export async function createCallSession(session: InsertCallSession): Promise<CallSession> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(callSessions).values(session);
+  const insertedId = Number(result[0].insertId);
+
+  const inserted = await db.select().from(callSessions).where(eq(callSessions.id, insertedId)).limit(1);
+  return inserted[0];
+}
+
+export async function getCallSessionByVapiCallId(vapiCallId: string): Promise<CallSession | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(callSessions).where(eq(callSessions.vapiCallId, vapiCallId)).limit(1);
+  return result[0];
+}
+
+export async function updateCallSession(id: number, updates: Partial<InsertCallSession>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(callSessions).set(updates).where(eq(callSessions.id, id));
+}
+
+export async function getCallSessionsByAgentId(agentId: number): Promise<CallSession[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(callSessions).where(eq(callSessions.agentId, agentId)).orderBy(desc(callSessions.startedAt));
+}
+
+// Conversation Message helpers
+export async function addConversationMessage(message: InsertConversationMessage): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(conversationMessages).values(message);
+}
+
+export async function getConversationMessagesByCallSessionId(callSessionId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(conversationMessages).where(eq(conversationMessages.callSessionId, callSessionId)).orderBy(conversationMessages.timestamp);
+}
+
+// Webhook Event helpers
+export async function logWebhookEvent(event: InsertWebhookEvent): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(webhookEvents).values(event);
+}
