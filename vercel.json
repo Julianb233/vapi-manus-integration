@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "pnpm build",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
-  "installCommand": "pnpm install",
+  "installCommand": "npm install",
   "framework": null,
   "rewrites": [
     {
@@ -19,7 +19,7 @@
     }
   ],
   "functions": {
-    "api/**/*.ts": {
+    "api/**/*.js": {
       "memory": 1024,
       "maxDuration": 10
     }
