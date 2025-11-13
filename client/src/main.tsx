@@ -37,22 +37,16 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
-const getBaseUrl = () => {
-  if (typeof window !== "undefined") {
-    // Browser should use current origin
-    return window.location.origin;
-  }
-  // SSR should use vercel url or localhost
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return `http://localhost:${process.env.PORT ?? 3000}`;
-};
-
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: `${getBaseUrl()}/api/trpc`,
+      url: () => {
+        // This function is called at request time, not initialization time
+        if (typeof window !== "undefined") {
+          return `${window.location.origin}/api/trpc`;
+        }
+        return "/api/trpc";
+      },
       transformer: superjson,
       fetch(input, init) {
         return globalThis.fetch(input, {
