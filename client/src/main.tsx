@@ -39,8 +39,8 @@ queryClient.getMutationCache().subscribe(event => {
 
 const getBaseUrl = () => {
   if (typeof window !== "undefined") {
-    // Browser should use relative path
-    return "";
+    // Browser should use current origin
+    return window.location.origin;
   }
   // SSR should use vercel url or localhost
   if (process.env.VERCEL_URL) {
