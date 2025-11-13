@@ -20,13 +20,15 @@ export const appRouter = router({
     }),
   }),
 
-  // Vapi Agent Management
+  // Vapi Agent Management (Auth optional for testing)
   agents: router({
-    list: protectedProcedure.query(async ({ ctx }) => {
-      return db.getVapiAgentsByUserId(ctx.user.id);
+    list: publicProcedure.query(async ({ ctx }) => {
+      // Use guest user ID (1) if not authenticated
+      const userId = ctx.user?.id || 1;
+      return db.getVapiAgentsByUserId(userId);
     }),
 
-    create: protectedProcedure
+    create: publicProcedure
       .input(
         z.object({
           name: z.string().min(1),
@@ -38,22 +40,29 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        // Use guest user ID (1) if not authenticated
+        const userId = ctx.user?.id || 1;
         const agent = await db.createVapiAgent({
-          userId: ctx.user.id,
+          userId,
           ...input,
         });
         return agent;
       }),
 
-    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+    get: publicProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
       const agent = await db.getVapiAgentById(input.id);
-      if (!agent || agent.userId !== ctx.user.id) {
+      if (!agent) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
+      }
+      // Allow access if user owns it or if auth is disabled
+      const userId = ctx.user?.id || 1;
+      if (agent.userId !== userId && ctx.user) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
       }
       return agent;
     }),
 
-    update: protectedProcedure
+    update: publicProcedure
       .input(
         z.object({
           id: z.number(),
@@ -69,16 +78,26 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const { id, ...updates } = input;
         const agent = await db.getVapiAgentById(id);
-        if (!agent || agent.userId !== ctx.user.id) {
+        if (!agent) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
+        }
+        // Allow access if user owns it or if auth is disabled
+        const userId = ctx.user?.id || 1;
+        if (agent.userId !== userId && ctx.user) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
         }
         await db.updateVapiAgent(id, updates);
         return { success: true };
       }),
 
-    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+    delete: publicProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       const agent = await db.getVapiAgentById(input.id);
-      if (!agent || agent.userId !== ctx.user.id) {
+      if (!agent) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
+      }
+      // Allow access if user owns it or if auth is disabled
+      const userId = ctx.user?.id || 1;
+      if (agent.userId !== userId && ctx.user) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
       }
       await db.deleteVapiAgent(input.id);
@@ -86,17 +105,22 @@ export const appRouter = router({
     }),
   }),
 
-  // Call History
+  // Call History (Auth optional for testing)
   calls: router({
-    listByAgent: protectedProcedure.input(z.object({ agentId: z.number() })).query(async ({ ctx, input }) => {
+    listByAgent: publicProcedure.input(z.object({ agentId: z.number() })).query(async ({ ctx, input }) => {
       const agent = await db.getVapiAgentById(input.agentId);
-      if (!agent || agent.userId !== ctx.user.id) {
+      if (!agent) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
+      }
+      // Allow access if user owns it or if auth is disabled
+      const userId = ctx.user?.id || 1;
+      if (agent.userId !== userId && ctx.user) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
       }
       return db.getCallSessionsByAgentId(input.agentId);
     }),
 
-    getMessages: protectedProcedure.input(z.object({ callSessionId: z.number() })).query(async ({ input }) => {
+    getMessages: publicProcedure.input(z.object({ callSessionId: z.number() })).query(async ({ input }) => {
       return db.getConversationMessagesByCallSessionId(input.callSessionId);
     }),
   }),

@@ -11,6 +11,7 @@ import "./index.css";
 const queryClient = new QueryClient();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
+  // Authentication is optional - don't redirect on auth errors
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
 
@@ -18,7 +19,8 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  // Just log the error instead of redirecting
+  console.warn("Authentication not configured. Continuing in guest mode.");
 };
 
 queryClient.getQueryCache().subscribe(event => {

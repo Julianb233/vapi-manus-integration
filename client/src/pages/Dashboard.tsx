@@ -20,9 +20,7 @@ export default function Dashboard() {
   const [newAgentFirstMessage, setNewAgentFirstMessage] = useState("");
   const [newAgentSystemPrompt, setNewAgentSystemPrompt] = useState("");
 
-  const { data: agents, isLoading, refetch } = trpc.agents.list.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
+  const { data: agents, isLoading, refetch } = trpc.agents.list.useQuery();
 
   const createAgentMutation = trpc.agents.create.useMutation({
     onSuccess: () => {
@@ -51,31 +49,32 @@ export default function Dashboard() {
     });
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // Authentication is optional - skip auth checks
+  // if (authLoading) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <Loader2 className="h-12 w-12 animate-spin text-primary" />
+  //     </div>
+  //   );
+  // }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>Please sign in to access the dashboard</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
-              <a href={getLoginUrl()}>Sign In</a>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // if (!isAuthenticated) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <Card className="w-full max-w-md">
+  //         <CardHeader>
+  //           <CardTitle>Authentication Required</CardTitle>
+  //           <CardDescription>Please sign in to access the dashboard</CardDescription>
+  //         </CardHeader>
+  //         <CardContent>
+  //           <Button asChild className="w-full">
+  //             <a href={getLoginUrl()}>Sign In</a>
+  //           </Button>
+  //         </CardContent>
+  //       </Card>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-background">

@@ -8,13 +8,14 @@ import { Link } from "wouter";
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  // Skip loading check - auth is optional
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10">
@@ -26,15 +27,9 @@ export default function Home() {
             <h1 className="text-xl font-bold">{APP_TITLE}</h1>
           </div>
           <div>
-            {isAuthenticated ? (
-              <Link href="/dashboard">
-                <Button>Go to Dashboard</Button>
-              </Link>
-            ) : (
-              <Button asChild>
-                <a href={getLoginUrl()}>Sign In</a>
-              </Button>
-            )}
+            <Link href="/dashboard">
+              <Button>Go to Dashboard</Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -48,17 +43,11 @@ export default function Home() {
           <p className="text-xl text-muted-foreground mb-8">
             Integrate Vapi voice AI with Manus AI capabilities to create powerful, conversational phone agents that understand context and provide intelligent responses.
           </p>
-          {isAuthenticated ? (
-            <Link href="/dashboard">
-              <Button size="lg" className="text-lg px-8">
-                Get Started
-              </Button>
-            </Link>
-          ) : (
-            <Button size="lg" className="text-lg px-8" asChild>
-              <a href={getLoginUrl()}>Get Started</a>
+          <Link href="/dashboard">
+            <Button size="lg" className="text-lg px-8">
+              Get Started
             </Button>
-          )}
+          </Link>
         </div>
       </section>
 
