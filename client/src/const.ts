@@ -8,6 +8,13 @@ export const APP_LOGO = "https://placehold.co/128x128/E1E7EF/1F2937?text=App";
 export const getLoginUrl = () => {
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
   const appId = import.meta.env.VITE_APP_ID;
+  
+  // If OAuth is not configured, return a placeholder or simple login endpoint
+  if (!oauthPortalUrl || !appId) {
+    console.warn("OAuth not configured. VITE_OAUTH_PORTAL_URL and VITE_APP_ID are required.");
+    return "/api/oauth/callback"; // Fallback to local OAuth endpoint
+  }
+  
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
   const state = btoa(redirectUri);
 
