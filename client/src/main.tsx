@@ -37,31 +37,39 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
-const trpcClient = trpc.createClient({
-  links: [
-    httpBatchLink({
-      url: () => {
-        // This function is called at request time, not initialization time
-        if (typeof window !== "undefined") {
-          return `${window.location.origin}/api/trpc`;
-        }
-        return "/api/trpc";
-      },
-      transformer: superjson,
-      fetch(input, init) {
-        return globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
-        });
-      },
-    }),
-  ],
-});
+// Create tRPC client - must be created after window is available
+function createTrpcClient() {
+  return trpc.createClient({
+    links: [
+      httpBatchLink({
+        url: `${window.location.origin}/api/trpc`,
+        transformer: superjson,
+        fetch(url, init) {
+          return globalThis.fetch(url, {
+            ...(init ?? {}),
+            credentials: "include",
+          });
+        },
+      }),
+    ],
+  });
+}
 
-createRoot(document.getElementById("root")!).render(
-  <trpc.Provider client={trpcClient} queryClient={queryClient}>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </trpc.Provider>
-);
+// Wait for DOM to be ready before initializing
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeApp);
+} else {
+  initializeApp();
+}
+
+function initializeApp() {
+  const trpcClient = createTrpcClient();
+  
+  createRoot(document.getElementById("root")!).render(
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </trpc.Provider>
+  );
+}
