@@ -115,6 +115,8 @@ vercel --prod
 
 After deployment, you need to set up your database schema:
 
+**IMPORTANT**: See [SETUP_DATABASE.md](./SETUP_DATABASE.md) for detailed instructions including creating the guest user for no-auth mode.
+
 #### Option A: Using Vercel CLI
 
 ```bash
@@ -122,7 +124,13 @@ After deployment, you need to set up your database schema:
 export DATABASE_URL="your-database-url"
 
 # Run migrations
-pnpm db:push
+npx drizzle-kit generate
+npx drizzle-kit migrate
+
+# Create guest user for no-auth mode
+# Run this SQL in your database:
+# INSERT INTO users (id, openId, name, role, createdAt, updatedAt, lastSignedIn)
+# VALUES (1, 'guest-user', 'Guest User', 'user', NOW(), NOW(), NOW());
 ```
 
 #### Option B: Via a one-time script
@@ -176,10 +184,14 @@ Once deployed, you need to connect your Vercel app to Vapi:
 ### 8. Test Your Deployment
 
 1. Visit your Vercel URL
-2. Log in (OAuth will work if configured)
+2. Click "Get Started" to access the dashboard (no login required!)
 3. Create a test agent
-4. Make a test call via Vapi
-5. Check that the conversation is logged in your dashboard
+4. Copy the webhook URL
+5. Configure Vapi (see step 7 above)
+6. Make a test call via Vapi
+7. Check that the conversation is logged in your dashboard
+
+**Note**: Authentication is optional by default. The app uses a "guest user" mode for testing. See [SETUP_DATABASE.md](./SETUP_DATABASE.md) for details.
 
 ## Environment Variables Reference
 
