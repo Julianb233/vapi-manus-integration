@@ -270,14 +270,28 @@ For issues and questions:
 
 ## 🚀 Deployment
 
-This application is designed to be deployed on the Manus platform, which provides:
+### Deploy to Vercel (Recommended)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Julianb233/Ian-Duffy-Vapi-Agent)
+
+This application is optimized for deployment on Vercel with:
+- ✅ Serverless functions for API routes
+- ✅ Automatic HTTPS and global CDN
+- ✅ Easy environment variable management
+- ✅ One-click deployment from Git
+
+**See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete Vercel deployment instructions.**
+
+### Deploy to Manus Platform
+
+Alternatively, deploy on the Manus platform which provides:
 - Automatic environment configuration
 - Database provisioning
 - OAuth integration
 - Public webhook URLs
 - Monitoring and analytics
 
-To deploy, simply push your code and use the Manus dashboard to publish your application.
+To deploy on Manus, simply push your code and use the Manus dashboard to publish your application.
 
 ---
 

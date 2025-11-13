@@ -209,15 +209,26 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
+const resolveApiUrl = () => {
+  // Check if OpenAI API key is available (for Vercel deployment)
+  if (process.env.OPENAI_API_KEY) {
+    return "https://api.openai.com/v1/chat/completions";
+  }
+  
+  // Otherwise use Manus Forge API
+  return ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
     : "https://forge.manus.im/v1/chat/completions";
+};
 
 const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+  if (!ENV.forgeApiKey && !process.env.OPENAI_API_KEY) {
+    throw new Error("Either BUILT_IN_FORGE_API_KEY or OPENAI_API_KEY must be configured");
   }
+};
+
+const getApiKey = () => {
+  return process.env.OPENAI_API_KEY || ENV.forgeApiKey || "";
 };
 
 const normalizeResponseFormat = ({
@@ -279,8 +290,11 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     response_format,
   } = params;
 
+  // Use GPT-4 if OpenAI key is available, otherwise use Manus model
+  const model = process.env.OPENAI_API_KEY ? "gpt-4o-mini" : "gemini-2.5-flash";
+  
   const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
+    model: model,
     messages: messages.map(normalizeMessage),
   };
 
@@ -296,9 +310,13 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
+  payload.max_tokens = 4096;
+  
+  // Only add thinking budget for Manus models
+  if (!process.env.OPENAI_API_KEY) {
+    payload.thinking = {
+      "budget_tokens": 128
+    };
   }
 
   const normalizedResponseFormat = normalizeResponseFormat({
@@ -316,7 +334,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
+      authorization: `Bearer ${getApiKey()}`,
     },
     body: JSON.stringify(payload),
   });
